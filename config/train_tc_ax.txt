@@ -1,0 +1,55 @@
+[common]
+save_model_dir = saved_models
+model_name = arcnet
+log_dir = logs
+device = 0
+exp_dir = experiments
+
+[data]
+data_root             = /gpfs/scratch/bz957/brats/data/MICCAI/MICCAI_BraTS_2019_Data_Training
+data_names            = config/train_names_all.txt
+train_names           = None
+val_names             = None
+modality_postfix      = [flair, t1, t1ce, t2]
+label_postfix         = seg 
+file_postfix          = nii.gz
+with_ground_truth     = True
+data_shape            = [19, 96, 96, 4]
+label_shape           = [11, 96, 96, 1]
+label_convert_source  = [0, 1, 2, 3, 4, 5]
+label_convert_target  = [0, 1, 0, 1, 1, 0] 
+labels                = ["Background", "Tumor Core"]
+batch_slice_direction = axial
+train_with_roi_patch  = True
+label_roi_mask        = [1,2,3,4]
+roi_patch_margin      = 5
+
+[network]
+net_type            = ARCNet
+net_name            = ARCNet_TC32
+downsample_twice    = True
+class_num           = 2
+
+[training]
+exp_name           = train_tc_ax
+lr_scheduler_step_size = 3
+lr_scheduler_gamma = 0.1
+learning_rate      = 1e-3
+train_batch_size   = 5
+val_batch_size     = 5
+log_nth            = 50
+num_epochs         = 300
+optim_weight_decay = 1e-7
+optim_betas        = [0.9, 0.999]
+optim_eps          = 1e-8
+vae_enable         = False
+loss_k1_weight     = 0.1
+loss_k2_weight     = 0.1
+train_val_ratio    = 0.8
+final_model_file = train_tc_ax.pth.tar
+use_last_checkpoint = False
+#use_pre_trained = False
+model_pre_trained = 
+#Uses the last checkpoint file from the exp_dir_name folder
+#model_pre_trained = model19_4s/arcnet_wt32_20000
+#model_save_prefix  = model19_prepost4s/arcnet_wt32
