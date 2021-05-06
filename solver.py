@@ -36,10 +36,11 @@ class Solver(object):
         self.model = model
         self.model_name = model_name
         self.num_epochs = num_epochs
+        self.vae = loss_args["vae_loss"]
 
         # get the customized loss function
-        if loss_args["vae_loss"]:
-            loss_func = CombinedLoss(k1=loss_args["loss_k1_weight"], k2=loss_args["loss_k2_weight"])
+        if self.vae:
+            loss_func = CombinedLoss(k1=loss_args["loss_k1_weight"], k2=loss_args["loss_k2_weight"],classes=class_num)
         else:
             loss_func = DiceLoss(classes=class_num)
         if torch.cuda.is_available():
@@ -108,8 +109,12 @@ class Solver(object):
                     y = sample_batched[1].type(torch.LongTensor)
                     if torch.cuda.is_available():
                         X, y = X.cuda(self.device, non_blocking=True), y.cuda(self.device, non_blocking=True)
-                    output = model(X)
-                    loss,per_ch_score = self.loss_func(output, y)
+                    if self.vae: 
+                        output, vae_out, mu, logvar =  model(X)
+                        loss = self.loss_func(y, output, X, vae_out, mu, logvar)
+                    else:
+                        output = model(X)
+                        loss,per_ch_score = self.loss_func(output, y)
                     #print(f'dice score per ch {per_ch_score}')
                     #print(f'loss is {loss}')  
                     if phase == 'train':
@@ -146,7 +151,7 @@ class Solver(object):
                     sample_data = torch.unsqueeze(single_example[0], 0) 
                     sample_label = torch.unsqueeze(single_example[1], 0)
                     self.logWriter.image_per_epoch(model.predict(sample_data, self.device),
-                                                  sample_label, 3, phase, epoch)
+                                                  sample_label, 3, phase, epoch)                        
                     ds_mean = self.logWriter.dice_score_per_epoch(phase, out_arr, y_arr, epoch)
                     print(f'no grad epoch {epoch}')            
                     if phase == 'val':
